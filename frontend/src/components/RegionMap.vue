@@ -84,7 +84,7 @@ defineExpose({ focusPlace })
 onMounted(async () => {
   await nextTick()
   map = L.map(mapElement.value, {
-    scrollWheelZoom: false,
+    scrollWheelZoom: true,
     zoomControl: true,
   }).setView([37.5665, 126.978], 11)
 
