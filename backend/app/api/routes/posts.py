@@ -1,4 +1,6 @@
-from fastapi import APIRouter, Depends, HTTPException, Response, status
+from typing import Annotated
+
+from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
 from sqlalchemy.orm import Session
 
 from app.db.session import get_db
@@ -8,6 +10,8 @@ from app.schemas.post import (
     PasswordVerification,
     PostCreate,
     PostDetail,
+    PostListResponse,
+    PostSort,
     PostSummary,
     PostUpdate,
 )
@@ -28,14 +32,37 @@ def _verify_password(post: Post, edit_password: str) -> None:
         raise HTTPException(status_code=403, detail="수정용 비밀번호가 일치하지 않습니다.")
 
 
-@router.get("", response_model=list[PostSummary])
-def list_posts(database: Session = Depends(get_db)) -> list[Post]:
-    return post_service.get_posts(database)
+@router.get("", response_model=PostListResponse)
+def list_posts(
+    database: Session = Depends(get_db),
+    page: Annotated[int, Query(ge=1)] = 1,
+    size: Annotated[int, Query(ge=1, le=100)] = 10,
+    query: Annotated[str | None, Query(max_length=200)] = None,
+    sort: Annotated[PostSort, Query()] = "latest",
+) -> PostListResponse:
+    normalized_query = query.strip() if query and query.strip() else None
+    posts, total = post_service.get_posts(
+        database,
+        page=page,
+        size=size,
+        query=normalized_query,
+        sort=sort,
+    )
+    return PostListResponse(
+        items=[PostSummary.model_validate(post) for post in posts],
+        total=total,
+        page=page,
+        size=size,
+        total_pages=(total + size - 1) // size,
+    )
 
 
 @router.get("/{post_id}", response_model=PostDetail)
 def get_post(post_id: int, database: Session = Depends(get_db)) -> Post:
-    return _get_post_or_404(database, post_id)
+    post = post_service.get_post_and_increment_view(database, post_id)
+    if post is None:
+        raise HTTPException(status_code=404, detail="게시글을 찾을 수 없습니다.")
+    return post
 
 
 @router.post("", response_model=PostDetail, status_code=status.HTTP_201_CREATED)

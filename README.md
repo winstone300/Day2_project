@@ -2,9 +2,9 @@
 
 서울 공공데이터를 활용하는 지역 정보 공유 커뮤니티의 모노레포입니다.
 
-현재 구현 범위는 3단계 게시판 기본 CRUD입니다. 서울 JSON 7개·6,518건을 서버
-시작 시 메모리에 적재하고, SQLite에 익명 게시글과 수정용 비밀번호를 저장합니다.
-검색·페이지네이션·조회수 증가는 다음 단계에서 구현합니다.
+현재 구현 범위는 4단계 게시판 검색·조회수입니다. 서울 JSON 7개·6,518건을 서버
+시작 시 메모리에 적재하고, SQLite 게시판의 CRUD·검색·페이지네이션·최신순 및
+조회수순 정렬을 제공합니다.
 
 ## 디렉터리
 
@@ -41,6 +41,16 @@ POST   /api/posts/{id}/verify-password
 PUT    /api/posts/{id}
 DELETE /api/posts/{id}
 ```
+
+목록 API는 다음 쿼리를 지원합니다.
+
+```text
+GET /api/posts?page=1&size=10&query=한강&sort=latest
+GET /api/posts?page=1&size=10&sort=views
+```
+
+목록 응답은 `items`, `total`, `page`, `size`, `total_pages`를 포함하며 게시글
+상세 조회가 성공할 때마다 조회수가 1씩 증가합니다.
 
 초기 DB에는 환영 게시글 한 건이 생성됩니다. 시연용 수정 비밀번호는
 `localhub-demo`이며 실제 운영 서비스에서는 사용하지 않습니다.

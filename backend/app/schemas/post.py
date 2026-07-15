@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
@@ -42,3 +43,14 @@ class PostSummary(BaseModel):
 
 class PostDetail(PostSummary):
     content: str
+
+
+PostSort = Literal["latest", "views"]
+
+
+class PostListResponse(BaseModel):
+    items: list[PostSummary]
+    total: int
+    page: int
+    size: int
+    total_pages: int
