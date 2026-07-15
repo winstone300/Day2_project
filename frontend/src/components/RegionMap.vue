@@ -5,6 +5,7 @@ import { nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 const props = defineProps({
   places: { type: Array, required: true },
   category: { type: String, required: true },
+  selectedPlaceId: { type: [String, Number], default: null },
 })
 
 const mapElement = ref(null)
@@ -68,14 +69,16 @@ function renderMarkers() {
   }
 }
 
-function focusPlace(contentId) {
+function focusPlace(contentId, scrollIntoView = true) {
   const marker = markersById.get(String(contentId))
   if (!map || !marker) return false
 
   const coordinate = marker.getLatLng()
   map.flyTo(coordinate, 16, { duration: 0.8 })
   marker.openPopup()
-  mapElement.value?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+  if (scrollIntoView) {
+    mapElement.value?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+  }
   return true
 }
 
@@ -95,10 +98,16 @@ onMounted(async () => {
 
   markerLayer = L.layerGroup().addTo(map)
   renderMarkers()
+  if (props.selectedPlaceId != null) {
+    focusPlace(props.selectedPlaceId, false)
+  }
   window.setTimeout(() => map?.invalidateSize(), 0)
 })
 
 watch(() => props.places, renderMarkers)
+watch(() => props.selectedPlaceId, (contentId) => {
+  if (contentId != null) focusPlace(contentId, false)
+})
 
 onBeforeUnmount(() => {
   map?.remove()
