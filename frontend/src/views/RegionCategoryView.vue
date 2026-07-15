@@ -4,6 +4,7 @@ import { useRoute, useRouter } from 'vue-router'
 
 import { getRegionCategory } from '../api/region'
 import PaginationControls from '../components/PaginationControls.vue'
+import RegionMap from '../components/RegionMap.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -69,6 +70,8 @@ watch([category, currentPage], loadCategory, { immediate: true })
     </div>
 
     <template v-else-if="data">
+      <RegionMap :places="data.items" :category="data.category" />
+
       <div v-if="data.items.length" class="region-place-grid">
         <article v-for="place in data.items" :key="place.content_id" class="region-place-card card">
           <img

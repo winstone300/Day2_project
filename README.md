@@ -33,6 +33,10 @@ uvicorn app.main:app --reload
 - 카테고리별 서울 정보: `GET http://localhost:8000/api/region/categories/{category}`
 - 지역정보 챗봇: `POST http://localhost:8000/api/chat`
 
+카테고리 상세 화면은 현재 페이지의 장소 10개를 Leaflet.js와 OpenStreetMap 지도
+핀으로 표시합니다. 제공 JSON에 포함된 좌표만 사용하며 별도 지도 API 키는 필요하지
+않습니다.
+
 ### 지역정보 챗봇 API
 
 ```json
