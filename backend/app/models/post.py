@@ -24,5 +24,4 @@ class Post(Base):
         DateTime,
         nullable=False,
         server_default=func.current_timestamp(),
-        onupdate=func.current_timestamp(),
     )

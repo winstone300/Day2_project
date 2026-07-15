@@ -36,11 +36,16 @@ class PostCrudTest(unittest.TestCase):
         self.engine.dispose()
         self.temporary_directory.cleanup()
 
-    def _create_post(self, password: str = "demo-password") -> Post:
+    def _create_post(
+        self,
+        password: str = "demo-password",
+        title: str = "서울 여행 정보를 공유합니다",
+        content: str = "한강공원 방문 후기를 공유합니다.",
+    ) -> Post:
         return create_post(
             PostCreate(
-                title="서울 여행 정보를 공유합니다",
-                content="한강공원 방문 후기를 공유합니다.",
+                title=title,
+                content=content,
                 edit_password=password,
             ),
             self.database,
@@ -51,13 +56,16 @@ class PostCrudTest(unittest.TestCase):
         self.assertEqual(created.region, "서울")
         self.assertEqual(created.view_count, 0)
         self.assertNotIn("edit_password", PostDetail.model_validate(created).model_dump())
-        self.assertEqual(len(list_posts(self.database)), 1)
+        post_list = list_posts(self.database)
+        self.assertEqual(post_list.total, 1)
+        self.assertEqual(len(post_list.items), 1)
         self.assertEqual(get_post(created.id, self.database).title, created.title)
 
         self.database.close()
         self.database = self.session_factory()
-        persisted = get_post(created.id, self.database)
+        persisted = self.database.get(Post, created.id)
         self.assertEqual(persisted.content, "한강공원 방문 후기를 공유합니다.")
+        self.assertEqual(persisted.view_count, 1)
 
     def test_verify_update_and_delete_with_correct_password(self) -> None:
         created = self._create_post()
@@ -123,6 +131,52 @@ class PostCrudTest(unittest.TestCase):
         with self.assertRaises(HTTPException) as context:
             get_post(9999, self.database)
         self.assertEqual(context.exception.status_code, 404)
+
+    def test_searches_title_and_content_with_pagination(self) -> None:
+        first = self._create_post(title="한강 관광 후기", content="야경이 멋집니다.")
+        second = self._create_post(title="서울 숙박 정보", content="종로 호텔 후기입니다.")
+        third = self._create_post(title="축제 정보", content="한강에서 열리는 행사입니다.")
+
+        first_page = list_posts(self.database, page=1, size=2)
+        self.assertEqual(first_page.total, 3)
+        self.assertEqual(first_page.total_pages, 2)
+        self.assertEqual([item.id for item in first_page.items], [third.id, second.id])
+
+        second_page = list_posts(self.database, page=2, size=2)
+        self.assertEqual([item.id for item in second_page.items], [first.id])
+
+        out_of_range_page = list_posts(self.database, page=3, size=2)
+        self.assertEqual(out_of_range_page.total, 3)
+        self.assertEqual(out_of_range_page.items, [])
+
+        title_results = list_posts(self.database, query="숙박")
+        self.assertEqual(title_results.total, 1)
+        self.assertEqual(title_results.items[0].id, second.id)
+
+        content_results = list_posts(self.database, query="한강")
+        self.assertEqual(content_results.total, 2)
+        self.assertEqual({item.id for item in content_results.items}, {first.id, third.id})
+
+        empty_results = list_posts(self.database, query="없는 검색어")
+        self.assertEqual(empty_results.total, 0)
+        self.assertEqual(empty_results.items, [])
+
+        blank_query_results = list_posts(self.database, query="   ")
+        self.assertEqual(blank_query_results.total, 3)
+
+    def test_increments_views_and_sorts_by_view_count(self) -> None:
+        first = self._create_post(title="첫 번째 게시글")
+        second = self._create_post(title="두 번째 게시글")
+        original_updated_at = second.updated_at
+
+        self.assertEqual(get_post(first.id, self.database).view_count, 1)
+        self.assertEqual(get_post(second.id, self.database).view_count, 1)
+        self.assertEqual(get_post(second.id, self.database).view_count, 2)
+
+        popular_posts = list_posts(self.database, sort="views")
+        self.assertEqual([item.id for item in popular_posts.items], [second.id, first.id])
+        self.assertEqual(popular_posts.items[0].view_count, 2)
+        self.assertEqual(self.database.get(Post, second.id).updated_at, original_updated_at)
 
 
 if __name__ == "__main__":
