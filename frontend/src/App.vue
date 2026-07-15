@@ -1,6 +1,8 @@
 <script setup>
 import { onMounted, ref } from 'vue'
 
+import ChatWidget from './components/ChatWidget.vue'
+
 const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'
 const apiStatus = ref('확인 중')
 const isConnected = ref(false)
@@ -37,5 +39,7 @@ onMounted(async () => {
       <strong>LocalHub 서울</strong>
       <span>한국관광공사 TourAPI 4.0 · 공공누리 제3유형 데이터를 활용합니다.</span>
     </footer>
+
+    <ChatWidget />
   </div>
 </template>
