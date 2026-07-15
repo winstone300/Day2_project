@@ -20,6 +20,7 @@ const currentPage = computed(() => {
   const page = Number.parseInt(String(route.query.page || '1'), 10)
   return Number.isFinite(page) && page > 0 ? page : 1
 })
+const selectedDistrict = computed(() => String(route.query.district || ''))
 
 function safeImageUrl(url) {
   return url?.startsWith('https://') ? url : ''
@@ -29,7 +30,11 @@ async function loadCategory() {
   loading.value = true
   error.value = ''
   try {
-    data.value = await getRegionCategory(category.value, currentPage.value)
+    data.value = await getRegionCategory(
+      category.value,
+      currentPage.value,
+      selectedDistrict.value,
+    )
   } catch (requestError) {
     error.value = requestError.message
     data.value = null
@@ -43,7 +48,21 @@ function changePage(page) {
   router.push({
     name: 'region-category',
     params: { category: category.value },
-    query: page === 1 ? {} : { page },
+    query: {
+      ...(selectedDistrict.value ? { district: selectedDistrict.value } : {}),
+      ...(page === 1 ? {} : { page }),
+    },
+  })
+  window.scrollTo({ top: 0, behavior: 'smooth' })
+}
+
+function changeDistrict(event) {
+  closeMap(false)
+  const district = event.target.value
+  router.push({
+    name: 'region-category',
+    params: { category: category.value },
+    query: district ? { district } : {},
   })
   window.scrollTo({ top: 0, behavior: 'smooth' })
 }
@@ -66,7 +85,7 @@ async function closeMap(restoreFocus = true) {
   mapTrigger = null
 }
 
-watch([category, currentPage], loadCategory, { immediate: true })
+watch([category, currentPage, selectedDistrict], loadCategory, { immediate: true })
 onBeforeUnmount(() => document.body.classList.remove('region-map-modal-open'))
 </script>
 
@@ -79,11 +98,26 @@ onBeforeUnmount(() => document.body.classList.remove('region-map-modal-open'))
         <p class="eyebrow">EXPLORE SEOUL</p>
         <h1>{{ category }}</h1>
         <p v-if="data">
-          서울의 {{ category }} 정보 <strong>{{ data.total.toLocaleString() }}</strong>곳을 확인해 보세요.
+          {{ selectedDistrict || '서울 전체' }}의 {{ category }} 정보
+          <strong>{{ data.total.toLocaleString() }}</strong>곳을 확인해 보세요.
         </p>
         <p v-else>서울의 {{ category }} 정보를 확인해 보세요.</p>
       </div>
       <span v-if="data" class="page-count">페이지당 10개</span>
+    </div>
+
+    <div v-if="data" class="district-filter card">
+      <label for="district-select">서울 지역 선택</label>
+      <select id="district-select" :value="selectedDistrict" @change="changeDistrict">
+        <option value="">서울 전체 ({{ data.all_total.toLocaleString() }}곳)</option>
+        <option
+          v-for="district in data.districts"
+          :key="district.name"
+          :value="district.name"
+        >
+          {{ district.name }} ({{ district.count.toLocaleString() }}곳)
+        </option>
+      </select>
     </div>
 
     <div v-if="loading" class="state-card">{{ category }} 정보를 불러오는 중입니다…</div>
@@ -123,7 +157,7 @@ onBeforeUnmount(() => document.body.classList.remove('region-map-modal-open'))
         </article>
       </div>
       <div v-else class="state-card empty-state">
-        <strong>이 페이지에 표시할 정보가 없습니다.</strong>
+        <strong>{{ selectedDistrict || '선택한 지역' }}에 표시할 정보가 없습니다.</strong>
       </div>
 
       <PaginationControls

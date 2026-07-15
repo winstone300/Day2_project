@@ -6,6 +6,11 @@ class RegionCategorySummary(BaseModel):
     count: int
 
 
+class RegionDistrictSummary(BaseModel):
+    name: str
+    count: int
+
+
 class RegionSummary(BaseModel):
     region: str
     total: int
@@ -25,7 +30,10 @@ class RegionPlace(BaseModel):
 
 class RegionCategoryResponse(BaseModel):
     category: str
+    district: str | None
+    districts: list[RegionDistrictSummary]
     items: list[RegionPlace]
+    all_total: int
     total: int
     page: int
     size: int
