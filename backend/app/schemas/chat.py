@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import Literal
 
 from pydantic import BaseModel, Field, field_validator
@@ -27,8 +28,17 @@ class ChatPlaceResult(BaseModel):
     image_url: str
 
 
+class ChatPostResult(BaseModel):
+    id: int
+    title: str
+    content_preview: str
+    view_count: int
+    created_at: datetime
+
+
 class ChatResponse(BaseModel):
     answer: str
-    intent: Literal["region_info"] = "region_info"
-    results: list[ChatPlaceResult]
+    intent: Literal["region_info", "post_search"] = "region_info"
+    results: list[ChatPlaceResult] = Field(default_factory=list)
+    post_results: list[ChatPostResult] = Field(default_factory=list)
     source: str = "한국관광공사 TourAPI 4.0 서울 데이터"
