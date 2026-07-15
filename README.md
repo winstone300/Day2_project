@@ -2,7 +2,7 @@
 
 서울 공공데이터를 활용하는 지역 정보 공유 커뮤니티의 모노레포입니다.
 
-현재 구현 범위는 7단계 챗봇 프론트엔드 연동입니다. 서울 JSON 7개·6,518건을
+현재 구현 범위는 8단계 통합 테스트·품질 검증입니다. 서울 JSON 7개·6,518건을
 서버 시작 시 메모리에 적재하고, 게시판 CRUD·검색·정렬과 Vue 화면을 제공합니다.
 챗봇은 외부 API 키 없이 서울 원본 데이터의 장소와 커뮤니티 게시글을 찾아 답변합니다.
 
@@ -102,3 +102,12 @@ pnpm dev
 cd backend
 .venv\Scripts\python.exe -m unittest discover -s tests -v
 ```
+
+통합 테스트용 패키지는 운영 의존성과 분리되어 있습니다.
+
+```powershell
+pip install -r requirements-dev.txt
+```
+
+GitLab CI는 모든 브랜치와 Merge Request에서 백엔드 단위·HTTP 통합 테스트와
+프론트엔드 프로덕션 빌드를 병렬로 실행합니다.
