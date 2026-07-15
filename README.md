@@ -2,9 +2,9 @@
 
 서울 공공데이터를 활용하는 지역 정보 공유 커뮤니티의 모노레포입니다.
 
-현재 구현 범위는 4단계 게시판 검색·조회수입니다. 서울 JSON 7개·6,518건을 서버
-시작 시 메모리에 적재하고, SQLite 게시판의 CRUD·검색·페이지네이션·최신순 및
-조회수순 정렬을 제공합니다.
+현재 구현 범위는 6-1단계 서울 지역정보 챗봇 API입니다. 서울 JSON 7개·6,518건을
+서버 시작 시 메모리에 적재하고, 게시판 CRUD·검색·정렬과 Vue 화면을 제공합니다.
+챗봇은 외부 API 키 없이 서울 원본 데이터에서 장소를 찾아 답변합니다.
 
 ## 디렉터리
 
@@ -30,6 +30,20 @@ uvicorn app.main:app --reload
 - API 문서: `http://localhost:8000/docs`
 - 상태 API: `http://localhost:8000/api/health`
 - 서울 지역 요약: `http://localhost:8000/api/region/summary`
+- 지역정보 챗봇: `POST http://localhost:8000/api/chat`
+
+### 지역정보 챗봇 API
+
+```json
+{
+  "message": "강남 문화시설 추천해줘",
+  "max_results": 3
+}
+```
+
+응답에는 안내 문장과 함께 `title`, `category`, `address`, 좌표, 이미지 URL을
+포함한 장소 목록이 반환됩니다. `max_results`는 1~5 사이이며 기본값은 3입니다.
+게시글 검색 의도와 챗봇 UI는 다음 단계에서 연동합니다.
 
 ### 게시판 API
 
