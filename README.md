@@ -109,8 +109,7 @@ cd backend
 pip install -r requirements-dev.txt
 ```
 
-GitLab CI는 모든 브랜치와 Merge Request에서 백엔드 단위·HTTP 통합 테스트와
-프론트엔드 프로덕션 빌드를 병렬로 실행합니다.
+백엔드 테스트와 프론트엔드 프로덕션 빌드는 배포 전 로컬에서 실행합니다.
 
 ## 임시 배포
 
