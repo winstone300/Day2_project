@@ -1,7 +1,43 @@
+<script setup>
+import { ref } from 'vue'
+import { useRouter } from 'vue-router'
+
+import { createPost } from '../api/posts'
+import PostForm from '../components/PostForm.vue'
+
+const router = useRouter()
+const submitting = ref(false)
+const error = ref('')
+
+async function submitPost(payload) {
+  submitting.value = true
+  error.value = ''
+  try {
+    const created = await createPost(payload)
+    router.push({ name: 'post-detail', params: { id: created.id } })
+  } catch (requestError) {
+    error.value = requestError.message
+  } finally {
+    submitting.value = false
+  }
+}
+</script>
+
 <template>
-  <section class="placeholder-card">
-    <p class="eyebrow">게시판</p>
-    <h1>게시글 작성</h1>
-    <p>작성 폼은 게시판 구현 단계에서 연결합니다.</p>
+  <section class="form-page">
+    <div class="page-heading compact">
+      <div>
+        <p class="eyebrow">NEW STORY</p>
+        <h1>새 이야기 작성</h1>
+        <p>서울에서 발견한 장소와 경험을 이웃과 나눠 주세요.</p>
+      </div>
+    </div>
+    <PostForm
+      mode="create"
+      :submitting="submitting"
+      :error="error"
+      @submit="submitPost"
+      @cancel="router.push('/posts')"
+    />
   </section>
 </template>

@@ -9,8 +9,8 @@ onMounted(async () => {
   try {
     const response = await fetch(`${apiBaseUrl}/api/health`)
     const data = await response.json()
-    isConnected.value = response.ok && data.database === 'connected'
-    apiStatus.value = isConnected.value ? 'API 연결됨' : 'API 점검 필요'
+    isConnected.value = response.ok && data.database === 'connected' && data.region_data === 'loaded'
+    apiStatus.value = isConnected.value ? '서비스 정상' : '서비스 점검 필요'
   } catch {
     apiStatus.value = 'API 연결 안 됨'
   }
@@ -34,7 +34,8 @@ onMounted(async () => {
     </main>
 
     <footer>
-      한국관광공사 TourAPI 4.0 데이터를 활용합니다.
+      <strong>LocalHub 서울</strong>
+      <span>한국관광공사 TourAPI 4.0 · 공공누리 제3유형 데이터를 활용합니다.</span>
     </footer>
   </div>
 </template>
