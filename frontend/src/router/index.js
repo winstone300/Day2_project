@@ -5,11 +5,13 @@ import BoardDetailView from '../views/BoardDetailView.vue'
 import BoardEditView from '../views/BoardEditView.vue'
 import BoardListView from '../views/BoardListView.vue'
 import HomeView from '../views/HomeView.vue'
+import RegionCategoryView from '../views/RegionCategoryView.vue'
 
 const router = createRouter({
   history: createWebHistory(),
   routes: [
     { path: '/', name: 'home', component: HomeView },
+    { path: '/region/:category', name: 'region-category', component: RegionCategoryView },
     { path: '/posts', name: 'posts', component: BoardListView },
     { path: '/posts/new', name: 'post-create', component: BoardCreateView },
     { path: '/posts/:id', name: 'post-detail', component: BoardDetailView },

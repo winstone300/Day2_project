@@ -30,6 +30,7 @@ uvicorn app.main:app --reload
 - API 문서: `http://localhost:8000/docs`
 - 상태 API: `http://localhost:8000/api/health`
 - 서울 지역 요약: `http://localhost:8000/api/region/summary`
+- 카테고리별 서울 정보: `GET http://localhost:8000/api/region/categories/{category}`
 - 지역정보 챗봇: `POST http://localhost:8000/api/chat`
 
 ### 지역정보 챗봇 API

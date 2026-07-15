@@ -3,8 +3,10 @@ import unittest
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
+from fastapi import HTTPException
+
 from app.api.routes.health import health_check
-from app.api.routes.region import get_region_summary
+from app.api.routes.region import get_region_category, get_region_summary
 from app.core.config import settings
 from app.services.seoul_data import (
     SEOUL_DATA_FILES,
@@ -74,6 +76,21 @@ class RegionApiTest(unittest.TestCase):
         self.assertEqual(summary.region, "서울")
         self.assertEqual(summary.total, 6518)
         self.assertEqual(len(summary.categories), 7)
+
+    def test_region_category_is_paginated_by_ten(self) -> None:
+        first_page = get_region_category("관광지", page=1, size=10)
+        second_page = get_region_category("관광지", page=2, size=10)
+
+        self.assertEqual(first_page.total, 783)
+        self.assertEqual(first_page.total_pages, 79)
+        self.assertEqual(len(first_page.items), 10)
+        self.assertEqual(len(second_page.items), 10)
+        self.assertNotEqual(first_page.items[0].content_id, second_page.items[0].content_id)
+
+    def test_unknown_region_category_returns_404(self) -> None:
+        with self.assertRaises(HTTPException) as context:
+            get_region_category("음식점", page=1, size=10)
+        self.assertEqual(context.exception.status_code, 404)
 
     def test_health_reports_loaded_data(self) -> None:
         response = health_check()

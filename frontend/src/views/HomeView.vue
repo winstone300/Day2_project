@@ -61,13 +61,19 @@ onMounted(async () => {
           <span>{{ summary.categories.length }}개 카테고리</span>
         </div>
         <div class="category-grid">
-          <article v-for="category in summary.categories" :key="category.name" class="category-card">
+          <RouterLink
+            v-for="category in summary.categories"
+            :key="category.name"
+            class="category-card"
+            :to="{ name: 'region-category', params: { category: category.name } }"
+          >
             <span class="category-icon">{{ category.name.slice(0, 1) }}</span>
             <div>
               <h3>{{ category.name }}</h3>
               <p>{{ category.count.toLocaleString() }}곳</p>
             </div>
-          </article>
+            <span class="category-arrow" aria-hidden="true">→</span>
+          </RouterLink>
         </div>
       </section>
 

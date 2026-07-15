@@ -129,6 +129,22 @@ class ApiIntegrationTest(unittest.TestCase):
         self.assertEqual(post_chat.json()["intent"], "post_search")
         self.assertEqual(post_chat.json()["post_results"][0]["id"], post["id"])
 
+    def test_region_category_page_over_http(self) -> None:
+        response = self.client.get(
+            "/api/region/categories/관광지",
+            params={"page": 2, "size": 10},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["category"], "관광지")
+        self.assertEqual(response.json()["page"], 2)
+        self.assertEqual(len(response.json()["items"]), 10)
+        self.assertEqual(response.json()["total"], 783)
+        self.assertEqual(
+            self.client.get("/api/region/categories/음식점").status_code,
+            404,
+        )
+
     def test_validation_errors_are_returned_as_422(self) -> None:
         invalid_requests = (
             self.client.post(
