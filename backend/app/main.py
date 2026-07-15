@@ -6,7 +6,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.config import settings
-from app.db.session import check_database_connection
+from app.db.init_db import initialize_database
 from app.router import api_router
 from app.services.seoul_data import SeoulDataError, seoul_data_store
 
@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 
 @asynccontextmanager
 async def lifespan(_: FastAPI) -> AsyncIterator[None]:
-    check_database_connection()
+    initialize_database()
     try:
         seoul_data_store.load()
     except SeoulDataError:
