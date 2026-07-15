@@ -2,7 +2,7 @@
 
 서울 공공데이터를 활용하는 지역 정보 공유 커뮤니티의 모노레포입니다.
 
-현재 구현 범위는 7단계 챗봇 프론트엔드 연동입니다. 서울 JSON 7개·6,518건을
+현재 구현 범위는 9단계 Netlify·Render 임시 배포 구성입니다. 서울 JSON 7개·6,518건을
 서버 시작 시 메모리에 적재하고, 게시판 CRUD·검색·정렬과 Vue 화면을 제공합니다.
 챗봇은 외부 API 키 없이 서울 원본 데이터의 장소와 커뮤니티 게시글을 찾아 답변합니다.
 
@@ -102,3 +102,21 @@ pnpm dev
 cd backend
 .venv\Scripts\python.exe -m unittest discover -s tests -v
 ```
+
+통합 테스트용 패키지는 운영 의존성과 분리되어 있습니다.
+
+```powershell
+pip install -r requirements-dev.txt
+```
+
+백엔드 테스트와 프론트엔드 프로덕션 빌드는 배포 전 로컬에서 실행합니다.
+
+## 임시 배포
+
+- 프론트엔드: Netlify
+- 백엔드: Render 무료 Web Service
+- 데이터베이스: `sqlite:////tmp/localhub.db` 임시 SQLite
+
+Render의 무료 파일시스템 특성상 재시작·재배포·유휴 종료 시 게시글이 초기화될 수
+있습니다. 환경변수 설정과 배포 후 검증 순서는 [배포 가이드](docs/DEPLOYMENT.md)를
+따릅니다.
