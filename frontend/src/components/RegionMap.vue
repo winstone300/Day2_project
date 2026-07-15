@@ -10,11 +10,14 @@ const props = defineProps({
 const mapElement = ref(null)
 let map = null
 let markerLayer = null
+const markersById = new Map()
 
 function validPlaces() {
-  return props.places.filter(
-    (place) => Number.isFinite(place.latitude) && Number.isFinite(place.longitude),
-  )
+  return props.places
+    .map((place, index) => ({ place, number: index + 1 }))
+    .filter(
+      ({ place }) => Number.isFinite(place.latitude) && Number.isFinite(place.longitude),
+    )
 }
 
 function popupContent(place) {
@@ -36,22 +39,24 @@ function renderMarkers() {
   if (!map || !markerLayer) return
 
   markerLayer.clearLayers()
+  markersById.clear()
   const places = validPlaces()
   const coordinates = []
 
-  places.forEach((place, index) => {
+  places.forEach(({ place, number }) => {
     const coordinate = [place.latitude, place.longitude]
     coordinates.push(coordinate)
     const icon = L.divIcon({
       className: 'region-map-marker',
-      html: `<span>${index + 1}</span>`,
+      html: `<span>${number}</span>`,
       iconSize: [38, 46],
       iconAnchor: [19, 44],
       popupAnchor: [0, -40],
     })
-    L.marker(coordinate, { icon, title: place.title })
+    const marker = L.marker(coordinate, { icon, title: place.title })
       .bindPopup(popupContent(place), { maxWidth: 280 })
       .addTo(markerLayer)
+    markersById.set(String(place.content_id), marker)
   })
 
   if (!coordinates.length) {
@@ -62,6 +67,19 @@ function renderMarkers() {
     map.fitBounds(coordinates, { padding: [36, 36], maxZoom: 14 })
   }
 }
+
+function focusPlace(contentId) {
+  const marker = markersById.get(String(contentId))
+  if (!map || !marker) return false
+
+  const coordinate = marker.getLatLng()
+  map.flyTo(coordinate, 16, { duration: 0.8 })
+  marker.openPopup()
+  mapElement.value?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+  return true
+}
+
+defineExpose({ focusPlace })
 
 onMounted(async () => {
   await nextTick()

@@ -11,6 +11,7 @@ const router = useRouter()
 const data = ref(null)
 const loading = ref(true)
 const error = ref('')
+const regionMap = ref(null)
 
 const category = computed(() => String(route.params.category || ''))
 const currentPage = computed(() => {
@@ -44,6 +45,10 @@ function changePage(page) {
   window.scrollTo({ top: 0, behavior: 'smooth' })
 }
 
+function focusPlace(place) {
+  regionMap.value?.focusPlace(place.content_id)
+}
+
 watch([category, currentPage], loadCategory, { immediate: true })
 </script>
 
@@ -70,10 +75,20 @@ watch([category, currentPage], loadCategory, { immediate: true })
     </div>
 
     <template v-else-if="data">
-      <RegionMap :places="data.items" :category="data.category" />
+      <RegionMap ref="regionMap" :places="data.items" :category="data.category" />
 
       <div v-if="data.items.length" class="region-place-grid">
-        <article v-for="place in data.items" :key="place.content_id" class="region-place-card card">
+        <article
+          v-for="(place, index) in data.items"
+          :key="place.content_id"
+          class="region-place-card card"
+          role="button"
+          tabindex="0"
+          :aria-label="`${index + 1}번 ${place.title} 지도에서 보기`"
+          @click="focusPlace(place)"
+          @keydown.enter="focusPlace(place)"
+          @keydown.space.prevent="focusPlace(place)"
+        >
           <img
             v-if="safeImageUrl(place.image_url)"
             :src="safeImageUrl(place.image_url)"
@@ -84,7 +99,7 @@ watch([category, currentPage], loadCategory, { immediate: true })
             {{ category.slice(0, 1) }}
           </div>
           <div class="region-place-copy">
-            <span>{{ place.category }}</span>
+            <span><b>{{ index + 1 }}</b>{{ place.category }}</span>
             <h2>{{ place.title }}</h2>
             <p>{{ place.address || '주소 정보가 제공되지 않았습니다.' }}</p>
             <small v-if="place.telephone">{{ place.telephone }}</small>
