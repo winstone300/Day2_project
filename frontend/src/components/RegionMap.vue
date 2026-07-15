@@ -10,21 +10,50 @@ const props = defineProps({
 
 const mapElement = ref(null)
 let map = null
+let markerLayer = null
+const markersById = new Map()
 
 function validPlaces() {
   return props.places
     .filter((place) => Number.isFinite(place.latitude) && Number.isFinite(place.longitude))
 }
 
-function showPlaces() {
-  if (!map) return
+function popupContent(place) {
+  const container = document.createElement('div')
+  container.className = 'region-map-popup'
 
+  const type = document.createElement('span')
+  type.textContent = place.category
+  const title = document.createElement('strong')
+  title.textContent = place.title
+  const address = document.createElement('p')
+  address.textContent = place.address || '주소 정보가 제공되지 않았습니다.'
+
+  container.append(type, title, address)
+  return container
+}
+
+function renderMarkers() {
+  if (!map || !markerLayer) return
+
+  markerLayer.clearLayers()
+  markersById.clear()
   const places = validPlaces()
   const coordinates = []
 
   places.forEach((place) => {
     const coordinate = [place.latitude, place.longitude]
     coordinates.push(coordinate)
+    const icon = L.divIcon({
+      className: 'region-map-marker',
+      iconSize: [30, 38],
+      iconAnchor: [15, 36],
+      popupAnchor: [0, -32],
+    })
+    const marker = L.marker(coordinate, { icon, title: place.title })
+      .bindPopup(popupContent(place), { maxWidth: 280 })
+      .addTo(markerLayer)
+    markersById.set(String(place.content_id), marker)
   })
 
   if (!coordinates.length) {
@@ -37,13 +66,12 @@ function showPlaces() {
 }
 
 function focusPlace(contentId, scrollIntoView = true) {
-  const selected = validPlaces().find(
-    (place) => String(place.content_id) === String(contentId),
-  )
-  if (!map || !selected) return false
+  const marker = markersById.get(String(contentId))
+  if (!map || !marker) return false
 
-  const coordinate = [selected.latitude, selected.longitude]
+  const coordinate = marker.getLatLng()
   map.flyTo(coordinate, 16, { duration: 0.8 })
+  marker.openPopup()
   if (scrollIntoView) {
     mapElement.value?.scrollIntoView({ behavior: 'smooth', block: 'center' })
   }
@@ -64,14 +92,15 @@ onMounted(async () => {
     attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
   }).addTo(map)
 
-  showPlaces()
+  markerLayer = L.layerGroup().addTo(map)
+  renderMarkers()
   if (props.selectedPlaceId != null) {
     focusPlace(props.selectedPlaceId, false)
   }
   window.setTimeout(() => map?.invalidateSize(), 0)
 })
 
-watch(() => props.places, showPlaces)
+watch(() => props.places, renderMarkers)
 watch(() => props.selectedPlaceId, (contentId) => {
   if (contentId != null) focusPlace(contentId, false)
 })
@@ -79,6 +108,7 @@ watch(() => props.selectedPlaceId, (contentId) => {
 onBeforeUnmount(() => {
   map?.remove()
   map = null
+  markerLayer = null
 })
 </script>
 
@@ -89,7 +119,7 @@ onBeforeUnmount(() => {
         <p class="eyebrow">MAP VIEW</p>
         <h2 id="region-map-title">지도에서 {{ category }} 보기</h2>
       </div>
-      <span>선택한 장소 주변 지도</span>
+      <span>현재 페이지 {{ validPlaces().length }}개 장소</span>
     </div>
     <div
       ref="mapElement"
