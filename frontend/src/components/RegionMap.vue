@@ -15,7 +15,10 @@ const markersById = new Map()
 
 function validPlaces() {
   return props.places
-    .filter((place) => Number.isFinite(place.latitude) && Number.isFinite(place.longitude))
+    .map((place, index) => ({ place, number: index + 1 }))
+    .filter(
+      ({ place }) => Number.isFinite(place.latitude) && Number.isFinite(place.longitude),
+    )
 }
 
 function popupContent(place) {
@@ -41,14 +44,15 @@ function renderMarkers() {
   const places = validPlaces()
   const coordinates = []
 
-  places.forEach((place) => {
+  places.forEach(({ place, number }) => {
     const coordinate = [place.latitude, place.longitude]
     coordinates.push(coordinate)
     const icon = L.divIcon({
       className: 'region-map-marker',
-      iconSize: [30, 38],
-      iconAnchor: [15, 36],
-      popupAnchor: [0, -32],
+      html: `<span>${number}</span>`,
+      iconSize: [38, 46],
+      iconAnchor: [19, 44],
+      popupAnchor: [0, -40],
     })
     const marker = L.marker(coordinate, { icon, title: place.title })
       .bindPopup(popupContent(place), { maxWidth: 280 })
@@ -119,7 +123,7 @@ onBeforeUnmount(() => {
         <p class="eyebrow">MAP VIEW</p>
         <h2 id="region-map-title">지도에서 {{ category }} 보기</h2>
       </div>
-      <span>현재 페이지 {{ validPlaces().length }}개 장소</span>
+      <span>현재 페이지 {{ validPlaces().length }}개 핀</span>
     </div>
     <div
       ref="mapElement"
