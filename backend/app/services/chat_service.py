@@ -152,6 +152,7 @@ def answer_region_question(
     scored_places = [
         ScoredPlace(place=place, score=score)
         for place in data_store.items
+        if not categories or place.category in categories
         if (score := _score_place(place, message, tokens, categories)) > 0
     ]
     scored_places.sort(key=lambda item: (-item.score, item.place.title, item.place.content_id))

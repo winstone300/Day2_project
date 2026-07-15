@@ -83,6 +83,7 @@ class ChatApiTest(unittest.TestCase):
         first = answer_region_question("강남 문화시설", 3, seoul_data_store)
         second = answer_region_question("강남 문화시설", 3, seoul_data_store)
         self.assertEqual(first, second)
+        self.assertTrue(all(item.category == "문화시설" for item in first.results))
 
     def test_empty_store_returns_no_results(self) -> None:
         empty_store = SeoulDataStore(seoul_data_store.data_dir)
