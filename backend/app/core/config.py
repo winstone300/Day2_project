@@ -9,6 +9,7 @@ BACKEND_DIR = Path(__file__).resolve().parents[2]
 class Settings(BaseSettings):
     app_name: str = "LocalHub API"
     database_url: str = "sqlite:///./localhub.db"
+    seoul_data_dir: Path = BACKEND_DIR / "data" / "seoul"
     openai_api_key: str = ""
     openai_model: str = "gpt-5.6-luna"
     cors_origins: str = "http://localhost:5173"
