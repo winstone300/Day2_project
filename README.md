@@ -2,9 +2,9 @@
 
 서울 공공데이터를 활용하는 지역 정보 공유 커뮤니티의 모노레포입니다.
 
-현재 구현 범위는 2단계 서울 데이터 기반입니다. Vue 라우팅, FastAPI 상태 API,
-SQLAlchemy SQLite 연결과 함께 서울 JSON 7개·6,518건을 서버 시작 시 메모리에
-적재하고 지역 요약 API로 제공합니다. 게시판 CRUD는 다음 단계에서 구현합니다.
+현재 구현 범위는 3단계 게시판 기본 CRUD입니다. 서울 JSON 7개·6,518건을 서버
+시작 시 메모리에 적재하고, SQLite에 익명 게시글과 수정용 비밀번호를 저장합니다.
+검색·페이지네이션·조회수 증가는 다음 단계에서 구현합니다.
 
 ## 디렉터리
 
@@ -30,6 +30,23 @@ uvicorn app.main:app --reload
 - API 문서: `http://localhost:8000/docs`
 - 상태 API: `http://localhost:8000/api/health`
 - 서울 지역 요약: `http://localhost:8000/api/region/summary`
+
+### 게시판 API
+
+```text
+GET    /api/posts
+GET    /api/posts/{id}
+POST   /api/posts
+POST   /api/posts/{id}/verify-password
+PUT    /api/posts/{id}
+DELETE /api/posts/{id}
+```
+
+초기 DB에는 환영 게시글 한 건이 생성됩니다. 시연용 수정 비밀번호는
+`localhub-demo`이며 실제 운영 서비스에서는 사용하지 않습니다.
+
+> RFP 요구에 따라 수정용 비밀번호를 평문으로 저장합니다. 이는 교육용으로만
+> 허용된 설계이며 실제 서비스에서는 반드시 안전한 비밀번호 해시를 사용해야 합니다.
 
 ## 프론트엔드 실행
 
