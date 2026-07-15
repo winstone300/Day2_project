@@ -1,7 +1,10 @@
 import re
 from dataclasses import dataclass
 
-from app.schemas.chat import ChatPlaceResult, ChatResponse
+from sqlalchemy.orm import Session
+
+from app.schemas.chat import ChatPlaceResult, ChatPostResult, ChatResponse
+from app.services.post_service import get_posts
 from app.services.seoul_data import SeoulDataStore, SeoulPlace
 
 TOKEN_PATTERN = re.compile(r"[0-9A-Za-z가-힣]+")
@@ -31,6 +34,31 @@ STOP_WORDS = {
     "있는",
     "가까운",
 }
+
+POST_INTENT_KEYWORDS = (
+    "게시글",
+    "게시판",
+    "커뮤니티",
+    "작성한 글",
+    "올라온 글",
+)
+
+POST_QUERY_STOP_WORDS = (
+    *POST_INTENT_KEYWORDS,
+    "검색해줘",
+    "검색해주세요",
+    "검색",
+    "찾아줘",
+    "찾아주세요",
+    "찾아",
+    "보여줘",
+    "보여주세요",
+    "최근",
+    "관련된",
+    "관련",
+    "에서",
+    "글",
+)
 
 
 @dataclass(frozen=True, slots=True)
@@ -129,3 +157,55 @@ def answer_region_question(
     scored_places.sort(key=lambda item: (-item.score, item.place.title, item.place.content_id))
     results = [_to_result(item.place) for item in scored_places[:max_results]]
     return ChatResponse(answer=_answer_for(results), results=results)
+
+
+def is_post_search_question(message: str) -> bool:
+    normalized_message = _normalized(message)
+    return any(_normalized(keyword) in normalized_message for keyword in POST_INTENT_KEYWORDS)
+
+
+def _post_query_for(message: str) -> str:
+    query = message.lower()
+    for stop_word in sorted(POST_QUERY_STOP_WORDS, key=len, reverse=True):
+        query = query.replace(stop_word, " ")
+    return " ".join(TOKEN_PATTERN.findall(query)).strip()
+
+
+def _post_preview(content: str, limit: int = 120) -> str:
+    preview = " ".join(content.split())
+    return preview if len(preview) <= limit else f"{preview[:limit].rstrip()}…"
+
+
+def answer_post_question(message: str, max_results: int, database: Session) -> ChatResponse:
+    query = _post_query_for(message)
+    posts, _ = get_posts(
+        database,
+        page=1,
+        size=max_results,
+        query=query or None,
+        sort="latest",
+    )
+    results = [
+        ChatPostResult(
+            id=post.id,
+            title=post.title,
+            content_preview=_post_preview(post.content),
+            view_count=post.view_count,
+            created_at=post.created_at,
+        )
+        for post in posts
+    ]
+
+    if not results:
+        answer = f"커뮤니티에서 ‘{query}’와 관련된 게시글을 찾지 못했어요."
+    elif query:
+        answer = f"커뮤니티에서 ‘{query}’와 관련된 게시글 {len(results)}건을 찾았어요."
+    else:
+        answer = f"커뮤니티의 최근 게시글 {len(results)}건을 가져왔어요."
+
+    return ChatResponse(
+        answer=answer,
+        intent="post_search",
+        post_results=results,
+        source="LocalHub 서울 커뮤니티",
+    )
