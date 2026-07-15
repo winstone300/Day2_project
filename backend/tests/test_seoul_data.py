@@ -86,6 +86,22 @@ class RegionApiTest(unittest.TestCase):
         self.assertEqual(len(first_page.items), 10)
         self.assertEqual(len(second_page.items), 10)
         self.assertNotEqual(first_page.items[0].content_id, second_page.items[0].content_id)
+        self.assertEqual(len(first_page.districts), 25)
+
+    def test_region_category_can_be_filtered_by_district(self) -> None:
+        response = get_region_category("관광지", page=1, size=10, district="강남구")
+
+        self.assertEqual(response.district, "강남구")
+        self.assertGreater(response.total, 0)
+        self.assertLessEqual(len(response.items), 10)
+        self.assertTrue(all("강남구" in item.address for item in response.items))
+        district = next(item for item in response.districts if item.name == "강남구")
+        self.assertEqual(district.count, response.total)
+
+    def test_unknown_district_returns_400(self) -> None:
+        with self.assertRaises(HTTPException) as context:
+            get_region_category("관광지", page=1, size=10, district="없는구")
+        self.assertEqual(context.exception.status_code, 400)
 
     def test_unknown_region_category_returns_404(self) -> None:
         with self.assertRaises(HTTPException) as context:

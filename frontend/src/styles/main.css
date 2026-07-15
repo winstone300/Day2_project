@@ -130,6 +130,10 @@ input:focus, textarea:focus, select:focus { border-color: var(--primary); box-sh
 .leaflet-control-attribution { font-size: 10px; }
 .region-map-modal-open { overflow: hidden; }
 .region-map-modal-backdrop { overflow-y: auto; }
+.district-filter { margin-bottom: 24px; padding: 18px 20px; display: flex; align-items: center; gap: 16px; }
+.district-filter label { flex: 0 0 auto; color: var(--ink); font-size: .9rem; font-weight: 800; }
+.district-filter select { width: min(360px, 100%); margin-left: auto; padding: 11px 38px 11px 13px; color: var(--ink); background: #fff; border: 1px solid #cbd8d2; border-radius: 10px; font: inherit; }
+.district-filter select:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgb(13 77 60 / 10%); outline: none; }
 .region-map-dialog { width: min(980px, 100%); max-height: calc(100vh - 40px); padding: 28px; overflow-y: auto; }
 .region-map-dialog-header { margin-bottom: 22px; padding-right: 44px; }
 .region-map-dialog-header h2 { margin-bottom: 7px; }
@@ -240,6 +244,8 @@ input:focus, textarea:focus, select:focus { border-color: var(--primary); box-sh
   .region-map-shell { height: 340px; }
   .region-map-dialog { max-height: calc(100vh - 20px); padding: 22px 16px 16px; }
   .region-map-modal-backdrop { padding: 10px; }
+  .district-filter { align-items: stretch; flex-direction: column; gap: 10px; }
+  .district-filter select { width: 100%; margin-left: 0; }
   .section-heading, .page-heading { align-items: flex-start; flex-direction: column; }
   .page-heading .button { width: 100%; }
   .recent-row { padding: 15px 18px; grid-template-columns: 1fr auto; gap: 7px 12px; }
