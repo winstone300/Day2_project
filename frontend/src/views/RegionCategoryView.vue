@@ -1,5 +1,5 @@
 <script setup>
-import { computed, ref, watch } from 'vue'
+import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
 import { getRegionCategory } from '../api/region'
@@ -11,7 +11,9 @@ const router = useRouter()
 const data = ref(null)
 const loading = ref(true)
 const error = ref('')
-const regionMap = ref(null)
+const selectedPlace = ref(null)
+const mapModalClose = ref(null)
+let mapTrigger = null
 
 const category = computed(() => String(route.params.category || ''))
 const currentPage = computed(() => {
@@ -37,6 +39,7 @@ async function loadCategory() {
 }
 
 function changePage(page) {
+  closeMap(false)
   router.push({
     name: 'region-category',
     params: { category: category.value },
@@ -45,11 +48,26 @@ function changePage(page) {
   window.scrollTo({ top: 0, behavior: 'smooth' })
 }
 
-function focusPlace(place) {
-  regionMap.value?.focusPlace(place.content_id)
+async function openMap(place, event) {
+  mapTrigger = event.currentTarget
+  selectedPlace.value = place
+  document.body.classList.add('region-map-modal-open')
+  await nextTick()
+  mapModalClose.value?.focus()
+}
+
+async function closeMap(restoreFocus = true) {
+  selectedPlace.value = null
+  document.body.classList.remove('region-map-modal-open')
+  if (restoreFocus && mapTrigger) {
+    await nextTick()
+    mapTrigger.focus()
+  }
+  mapTrigger = null
 }
 
 watch([category, currentPage], loadCategory, { immediate: true })
+onBeforeUnmount(() => document.body.classList.remove('region-map-modal-open'))
 </script>
 
 <template>
@@ -75,8 +93,6 @@ watch([category, currentPage], loadCategory, { immediate: true })
     </div>
 
     <template v-else-if="data">
-      <RegionMap ref="regionMap" :places="data.items" :category="data.category" />
-
       <div v-if="data.items.length" class="region-place-grid">
         <article
           v-for="(place, index) in data.items"
@@ -85,9 +101,9 @@ watch([category, currentPage], loadCategory, { immediate: true })
           role="button"
           tabindex="0"
           :aria-label="`${index + 1}번 ${place.title} 지도에서 보기`"
-          @click="focusPlace(place)"
-          @keydown.enter="focusPlace(place)"
-          @keydown.space.prevent="focusPlace(place)"
+          @click="openMap(place, $event)"
+          @keydown.enter="openMap(place, $event)"
+          @keydown.space.prevent="openMap(place, $event)"
         >
           <img
             v-if="safeImageUrl(place.image_url)"
@@ -116,5 +132,41 @@ watch([category, currentPage], loadCategory, { immediate: true })
         @change="changePage"
       />
     </template>
+
+    <Teleport to="body">
+      <div
+        v-if="selectedPlace && data"
+        class="modal-backdrop region-map-modal-backdrop"
+        @click.self="closeMap()"
+        @keydown.esc="closeMap()"
+      >
+        <section
+          class="modal-card region-map-dialog"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="region-map-dialog-title"
+        >
+          <button
+            ref="mapModalClose"
+            class="modal-close"
+            type="button"
+            aria-label="지도 팝업 닫기"
+            @click="closeMap()"
+          >
+            &times;
+          </button>
+          <header class="region-map-dialog-header">
+            <p class="eyebrow">PLACE MAP</p>
+            <h2 id="region-map-dialog-title">{{ selectedPlace.title }}</h2>
+            <p>{{ selectedPlace.address || '주소 정보가 제공되지 않았습니다.' }}</p>
+          </header>
+          <RegionMap
+            :places="data.items"
+            :category="data.category"
+            :selected-place-id="selectedPlace.content_id"
+          />
+        </section>
+      </div>
+    </Teleport>
   </section>
 </template>

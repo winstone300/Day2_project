@@ -1,10 +1,12 @@
 <script setup>
 import L from 'leaflet'
 import { nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import dogMapPin from '../assets/dog-map-pin.png'
 
 const props = defineProps({
   places: { type: Array, required: true },
   category: { type: String, required: true },
+  selectedPlaceId: { type: [String, Number], default: null },
 })
 
 const mapElement = ref(null)
@@ -14,10 +16,7 @@ const markersById = new Map()
 
 function validPlaces() {
   return props.places
-    .map((place, index) => ({ place, number: index + 1 }))
-    .filter(
-      ({ place }) => Number.isFinite(place.latitude) && Number.isFinite(place.longitude),
-    )
+    .filter((place) => Number.isFinite(place.latitude) && Number.isFinite(place.longitude))
 }
 
 function popupContent(place) {
@@ -43,15 +42,15 @@ function renderMarkers() {
   const places = validPlaces()
   const coordinates = []
 
-  places.forEach(({ place, number }) => {
+  places.forEach((place) => {
     const coordinate = [place.latitude, place.longitude]
     coordinates.push(coordinate)
-    const icon = L.divIcon({
-      className: 'region-map-marker',
-      html: `<span>${number}</span>`,
-      iconSize: [38, 46],
-      iconAnchor: [19, 44],
-      popupAnchor: [0, -40],
+    const icon = L.icon({
+      iconUrl: dogMapPin,
+      className: 'region-map-dog-marker',
+      iconSize: [52, 52],
+      iconAnchor: [26, 50],
+      popupAnchor: [0, -46],
     })
     const marker = L.marker(coordinate, { icon, title: place.title })
       .bindPopup(popupContent(place), { maxWidth: 280 })
@@ -68,14 +67,16 @@ function renderMarkers() {
   }
 }
 
-function focusPlace(contentId) {
+function focusPlace(contentId, scrollIntoView = true) {
   const marker = markersById.get(String(contentId))
   if (!map || !marker) return false
 
   const coordinate = marker.getLatLng()
   map.flyTo(coordinate, 16, { duration: 0.8 })
   marker.openPopup()
-  mapElement.value?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+  if (scrollIntoView) {
+    mapElement.value?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+  }
   return true
 }
 
@@ -95,10 +96,16 @@ onMounted(async () => {
 
   markerLayer = L.layerGroup().addTo(map)
   renderMarkers()
+  if (props.selectedPlaceId != null) {
+    focusPlace(props.selectedPlaceId, false)
+  }
   window.setTimeout(() => map?.invalidateSize(), 0)
 })
 
 watch(() => props.places, renderMarkers)
+watch(() => props.selectedPlaceId, (contentId) => {
+  if (contentId != null) focusPlace(contentId, false)
+})
 
 onBeforeUnmount(() => {
   map?.remove()
